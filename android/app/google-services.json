@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1068018762929",
+    "project_id": "kitin-fbed4",
+    "storage_bucket": "kitin-fbed4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1068018762929:android:63d9153ceab80f8a8a4e90",
+        "android_client_info": {
+          "package_name": "kitin.kyro.edu.kitin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1068018762929-bd9keqaatdfmu50i3ca6c8hsmrm0j243.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUFJMtCAZ-coxaig44nIrJqip8MIdpHjU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1068018762929-bd9keqaatdfmu50i3ca6c8hsmrm0j243.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
