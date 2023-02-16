@@ -5,16 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
-import 'package:kitin/Network/NetworkManager.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:kitin/Widgets.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:open_settings/open_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-
-
+import 'package:http/http.dart' as http;
+import 'Bindings/NetworkManager.dart';
 
 class WebPage extends StatefulWidget {
   const WebPage({Key? key}) : super(key: key);
@@ -26,39 +24,39 @@ class WebPage extends StatefulWidget {
 class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
   final GlobalKey webViewKey = GlobalKey();
 
-
-  String? sharedUrl,loadingwidget;
- InAppWebViewController? webViewController;
+  String? sharedUrl, loadingwidget;
+  InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
-  PullToRefreshSettings pullToRefreshSettings=PullToRefreshSettings(
-    color:const Color(0xFF5f56c6)
-  );
+  PullToRefreshSettings pullToRefreshSettings =
+      PullToRefreshSettings(color: const Color(0xFF5f56c6));
   double progress = 0;
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   String _debugLabelString = "";
   final bool _requireConsent = true;
   bool pullToRefreshEnabled = true;
+
+
   @override
   void initState() {
     setupInteractedMessage();
     pullToRefreshController = kIsWeb
         ? null
         : PullToRefreshController(
-      settings: pullToRefreshSettings,
-      onRefresh: () async {
-        if (defaultTargetPlatform == TargetPlatform.android) {
-          webViewController?.reload();
-        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-          webViewController?.loadUrl(
-              urlRequest:
-              URLRequest(url: await webViewController?.getUrl()));
-        }
-      },
-    );
+            settings: pullToRefreshSettings,
+            onRefresh: () async {
+              if (defaultTargetPlatform == TargetPlatform.android) {
+                webViewController?.reload();
+              } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+                webViewController?.loadUrl(
+                    urlRequest:
+                        URLRequest(url: await webViewController?.getUrl()));
+              }
+            },
+          );
     pullToRefreshController?.setEnabled(pullToRefreshEnabled);
     super.initState();
+  }
 
- }
   Future<void> setupInteractedMessage() async {
     if (!mounted) return;
 
@@ -67,42 +65,42 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
     OneSignal.shared.setRequiresUserPrivacyConsent(_requireConsent);
 
     OneSignal.shared.setNotificationOpenedHandler(
-            (OSNotificationOpenedResult result) async {
-          if (kDebugMode) {
-            print('NOTIFICATION OPENED HANDLER CALLED WITH: $result');
-          }
-          if (result.notification.additionalData != null) {
-            await webViewController?.loadUrl(
-                urlRequest: URLRequest(
-                    url: WebUri.uri(
-                        Uri.parse(result.notification.additionalData!['uri']))));
-          }
-          setState(() {
-            _debugLabelString =
+        (OSNotificationOpenedResult result) async {
+      if (kDebugMode) {
+        print('NOTIFICATION OPENED HANDLER CALLED WITH: $result');
+      }
+      if (result.notification.additionalData != null) {
+        await webViewController?.loadUrl(
+            urlRequest: URLRequest(
+                url: WebUri.uri(
+                    Uri.parse(result.notification.additionalData!['uri']))));
+      }
+      setState(() {
+        _debugLabelString =
             "Opened notification: \n${result.notification.jsonRepresentation().replaceAll("\\n", "\n")}";
-          });
-        });
+      });
+    });
 
     OneSignal.shared.setNotificationWillShowInForegroundHandler(
-            (OSNotificationReceivedEvent event) async {
-          if (kDebugMode) {
-            print('FOREGROUND HANDLER CALLED WITH: $event');
-          }
+        (OSNotificationReceivedEvent event) async {
+      if (kDebugMode) {
+        print('FOREGROUND HANDLER CALLED WITH: $event');
+      }
 
-          /// Display Notification, send null to not display
+      /// Display Notification, send null to not display
 
-          event.complete(event.notification);
-          if (event.notification.additionalData != null) {
-            await webViewController?.loadUrl(
-                urlRequest: URLRequest(
-                    url: WebUri.uri(
-                        Uri.parse(event.notification.additionalData!['uri']))));
-          }
-          setState(() {
-            _debugLabelString =
+      event.complete(event.notification);
+      if (event.notification.additionalData != null) {
+        await webViewController?.loadUrl(
+            urlRequest: URLRequest(
+                url: WebUri.uri(
+                    Uri.parse(event.notification.additionalData!['uri']))));
+      }
+      setState(() {
+        _debugLabelString =
             "Notification received in foreground notification: \n${event.notification.jsonRepresentation().replaceAll("\\n", "\n")}";
-          });
-        });
+      });
+    });
 
     OneSignal.shared
         .setInAppMessageClickedHandler((OSInAppMessageAction action) async {
@@ -111,7 +109,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
       // }
       setState(() {
         _debugLabelString =
-        "In App Message Clicked: \n${action.jsonRepresentation().replaceAll("\\n", "\n")}";
+            "In App Message Clicked: \n${action.jsonRepresentation().replaceAll("\\n", "\n")}";
       });
     });
 
@@ -171,7 +169,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
     OneSignal.shared.disablePush(false);
 
     bool userProvidedPrivacyConsent =
-    await OneSignal.shared.userProvidedPrivacyConsent();
+        await OneSignal.shared.userProvidedPrivacyConsent();
     if (kDebugMode) {
       print("USER PROVIDED PRIVACY CONSENT: $userProvidedPrivacyConsent");
     }
@@ -197,7 +195,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
 
     // Get the value for a trigger by its key
     Object? triggerValue =
-    await OneSignal.shared.getTriggerValueForKey("trigger_3");
+        await OneSignal.shared.getTriggerValueForKey("trigger_3");
     if (kDebugMode) {
       print("'trigger_3' key trigger value: ${triggerValue?.toString()}");
     }
@@ -210,18 +208,31 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
     OneSignal.shared.pauseInAppMessages(false);
   }
 
-
-
-
-
-
   Future<WebUri> get _url async {
     final SharedPreferences prefs = await _prefs;
-    sharedUrl=prefs.getString('url');
+    sharedUrl = prefs.getString('url');
     if (kDebugMode) {
       print('sharedurl:$sharedUrl');
     }
+
     return WebUri.uri(Uri.parse(sharedUrl!));
+  }
+
+
+  Future<void> loadTime() async{
+    try {
+
+      //put whatever you are running here and add timeout to http request
+
+      await http.get(Uri.parse("https://www.app.kitin.in/new-home")).timeout(const Duration(seconds: 10));
+
+    } on TimeoutException catch (e, s) {
+
+      //show any error after timeout here
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Your Internet Connection Is Slow. Please Wait !')));
+    }
   }
 
   final NetworkManager controller = Get.put(NetworkManager());
@@ -235,7 +246,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
       // SystemChrome.setSystemUIOverlayStyle(
       //   SystemUiOverlayStyle.dark.copyWith(statusBarColor:  const Color(0xFF262d95)),
       // );
-      return WillPopScope(
+      return Scaffold(body:WillPopScope(
         onWillPop: () async {
           // detect Android back button click
           final controller = webViewController;
@@ -262,122 +273,170 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                     AsyncSnapshot snapshot) =>
                                 snapshot.hasData
                                     ? Visibility(
-                                    visible: true,
-                                    maintainState: true,
-                                    child: InAppWebView(
-                                        key: webViewKey,
-                                        gestureRecognizers: Set()..add(Factory<VerticalDragGestureRecognizer>(() => VerticalDragGestureRecognizer())),
-                                        pullToRefreshController: pullToRefreshController,
-                                        initialUrlRequest:
-                                            URLRequest(url: snapshot.data),
-                                        initialSettings: InAppWebViewSettings(
-                                            allowsBackForwardNavigationGestures:
-                                                true,
-                                            useShouldOverrideUrlLoading: true,
-                                            mediaPlaybackRequiresUserGesture:
-                                                false,
-                                            allowsInlineMediaPlayback: true,
-                                            iframeAllow: "camera; microphone",
-                                            iframeAllowFullscreen: true,
-                                            useHybridComposition: true),
-                                        contextMenu: ContextMenu(
-                                            settings: ContextMenuSettings(
-                                                hideDefaultSystemContextMenuItems:
-                                                    true)),
+                                        visible: true,
+                                        maintainState: true,
+                                        child: InAppWebView(
+                                          key: webViewKey,
+                                          gestureRecognizers: Set()
+                                            ..add(Factory<
+                                                    VerticalDragGestureRecognizer>(
+                                                () =>
+                                                    VerticalDragGestureRecognizer())),
+                                          pullToRefreshController:
+                                              pullToRefreshController,
+                                          initialUrlRequest:
+                                              URLRequest(url: snapshot.data),
+                                          initialSettings: InAppWebViewSettings(
+                                              allowsBackForwardNavigationGestures:
+                                                  true,
+                                              useShouldOverrideUrlLoading: true,
+                                              cacheEnabled: true,
+                                              allowFileAccess: true,
+                                              mediaPlaybackRequiresUserGesture:
+                                                  false,
+                                              allowsInlineMediaPlayback: true,
+                                              iframeAllow: "camera; microphone",
+                                              iframeAllowFullscreen: true,
+                                              useHybridComposition: true),
+                                          contextMenu: ContextMenu(
+                                              settings: ContextMenuSettings(
+                                                  hideDefaultSystemContextMenuItems:
+                                                      true)),
+                                          onEnterFullscreen:(controller){
+                                            SystemChrome.setPreferredOrientations([
+                                              DeviceOrientation.portraitUp,
+                                              DeviceOrientation.landscapeLeft,
+                                              DeviceOrientation.landscapeRight,
+                                            ]);
+                                          },
+                                          onExitFullscreen: (controller){
+                                            SystemChrome.setPreferredOrientations([
+                                              DeviceOrientation.portraitUp
+                                            ]);
+                                          },
+                                          shouldOverrideUrlLoading: (controller,
+                                              navigationAction) async {
+                                            loadTime();
+                                            final SharedPreferences prefs =
+                                                await _prefs;
+                                            var uri =
+                                                navigationAction.request.url!;
 
-                                        shouldOverrideUrlLoading: (controller,
-                                            navigationAction) async {
-                                          final SharedPreferences prefs = await _prefs;
-                                          var uri = navigationAction.request.url!;
-                                          // setState(() {
-                                          //   loadingwidget=uri.toString().startsWith("https://www.app.kitin.in/wp-login.php")?"login":(uri.toString().startsWith("https://www.app.kitin.in/lsa-livestock-assistant") || uri.toString().startsWith("https://www.app.kitin.in/agriculture-supervisor") )?'home':null;
-                                          // });
-                                          // if(uri.toString().startsWith("https://www.app.kitin.in/wp-login.php/") || uri.toString().startsWith("https://www.app.kitin.in/lsa-livestock-assistant") || uri.toString().startsWith("https://www.app.kitin.in/agriculture-supervisor")){
-                                          //   setState(() {
-                                          //     _isVisible = false;
-                                          //   });
-                                          // }else{
-                                          //   setState(() {
-                                          //     _isVisible = true;
-                                          //   });
-                                          // }
-                                          if(uri.toString().startsWith("https://app.kitin.in") || uri.toString().startsWith("https://kitin.in")){
-                                            final tempUrl=prefs.getString('permanentLink');
-                                            controller.loadUrl(urlRequest: URLRequest(url: WebUri.uri(Uri.parse(tempUrl!))));
-                                          }
-                                          if(uri.toString()=="https://www.app.kitin.in" ){
-                                            final tempUrl=prefs.getString('permanentLink');
-                                            controller.loadUrl(urlRequest: URLRequest(url: WebUri.uri(Uri.parse(tempUrl!))));
-                                          }
-                                          if (uri.toString().startsWith(
-                                                  "https://kitinapp.page.link/") ||
-                                              uri.toString().startsWith(
-                                                  "https://app.kitin.in/") || uri.toString().startsWith(
-                                              "https://www.app.kitin.in/") || uri.toString().startsWith(
-                                              "https://kitin.in/")) {
-                                            // do whatever you want and cancel the request.
+                                            if (uri.toString().startsWith(
+                                                    "https://app.kitin.in") ||
+                                                uri.toString().startsWith(
+                                                    "https://kitin.in")) {
+                                              final tempUrl = prefs
+                                                  .getString('permanentLink');
+                                              controller.loadUrl(
+                                                  urlRequest: URLRequest(
+                                                      url: WebUri.uri(Uri.parse(
+                                                          tempUrl!))));
+                                            }
+                                            if (uri.toString() ==
+                                                "https://www.app.kitin.in") {
+                                              const tempUrl = 'https://www.app.kitin.in/new-home';
+                                              controller.loadUrl(
+                                                  urlRequest: URLRequest(
+                                                      url: WebUri.uri(Uri.parse(
+                                                          tempUrl))));
+                                            }
+                                            if (uri.toString().startsWith("https://kitinapp.page.link/") ||
+                                                uri.toString().startsWith("http://kitinapp.page.link/") ||
+                                                uri.toString().startsWith(
+                                                    "https://app.kitin.in/") ||
+                                                uri.toString().startsWith(
+                                                    "http://app.kitin.in/") ||
+                                                uri.toString().startsWith(
+                                                    "https://www.app.kitin.in/") ||
+                                                uri.toString().startsWith(
+                                                    "http://www.app.kitin.in/") ||
+                                                uri.toString().startsWith(
+                                            "https://kitin.in/") ||
+                                                uri.toString().startsWith(
+                                                    "https://kitin.in/")) {
+                                              // do whatever you want and cancel the request.
 
-                                            print('loading Widget:$loadingwidget');
-                                            return NavigationActionPolicy.ALLOW;
-                                          }
-                                          if (kDebugMode) {
-                                            print("loading unknown url");
-                                          }
-                                          await launchUrl(uri);
-                                          return NavigationActionPolicy.CANCEL;
-                                        },
-                                        onWebViewCreated: (controller) {
-                                          webViewController = controller;
-                                        },
+                                              print(
+                                                  'loading Widget:$loadingwidget');
+                                              return NavigationActionPolicy
+                                                  .ALLOW;
+                                            }
+                                            if (kDebugMode) {
+                                              print("loading unknown url");
+                                            }
+                                            await launchUrl(uri,mode: LaunchMode.externalNonBrowserApplication);
+                                            return NavigationActionPolicy
+                                                .CANCEL;
+                                          },
+                                          onWebViewCreated: (controller) {
+                                            webViewController = controller;
+                                          },
 
-                                        onProgressChanged: (controller, progress) {
-                                          setState(() {
-                                            this.progress = progress /100 ;
+                                          onProgressChanged:
+                                              (controller, progress) {
 
-                                          });
-                                          if(progress==100){
-                                            pullToRefreshController?.endRefreshing();
-                                          }
-                                        },
-                                        onLoadStop: (controller,url){
-                                          pullToRefreshController?.endRefreshing();
-                                        },
+                                            setState(() {
+                                              this.progress = progress / 75;
+                                            });
+                                            if (progress == 100) {
+                                              pullToRefreshController
+                                                  ?.endRefreshing();
+                                            }
 
-                                        onReceivedHttpError: (controller,
-                                            request, errorResponse) async {
-                                          // Handle HTTP errors here
-                                          var isForMainFrame =
-                                              request.isForMainFrame ?? false;
-                                          if (!isForMainFrame) {
-                                            controller.loadFile(assetFilePath: 'assets/404.html');
-                                            return;
-                                          }
 
-                                          controller.loadFile(assetFilePath: 'assets/404.html');
-                                        },
-                                        onReceivedError:
-                                            (controller, request, error) async {
-                                              pullToRefreshController?.endRefreshing();
-                                          // Handle web page loading errors here
-                                          var isForMainFrame =
-                                              request.isForMainFrame ?? false;
-                                          if (!isForMainFrame ||
-                                              (!kIsWeb &&
-                                                  defaultTargetPlatform ==
-                                                      TargetPlatform.iOS &&
-                                                  error.type ==
-                                                      WebResourceErrorType
-                                                          .CANCELLED)) {
-                                            // controller.loadFile(assetFilePath: 'assets/404.html');
-                                            return;
-                                          }
+                                          },
 
-                                          // var errorUrl = request.url;
-                                          // controller.loadFile(assetFilePath: 'assets/404.html');
+                                          onLoadStart: (controller, url) {
 
-                                        },
-                                      ))
-                                    :loader())
+                                            loader();
+                                            },
+                                          onLoadStop: (controller, url) {
+                                            pullToRefreshController
+                                                ?.endRefreshing();
+                                            // progress < 1.0 ? loader(context) : Container(color: Colors.transparent,);
+                                          },
+                                          onReceivedHttpError: (controller,
+                                              request, errorResponse) async {
+                                            // Handle HTTP errors here
+                                            var isForMainFrame =
+                                                request.isForMainFrame ?? false;
+                                            if (!isForMainFrame) {
+                                              controller.loadFile(
+                                                  assetFilePath:
+                                                      'assets/404.html');
+                                              return;
+                                            }
+
+                                            controller.loadFile(
+                                                assetFilePath:
+                                                    'assets/404.html');
+                                          },
+                                          onReceivedError: (controller, request,
+                                              error) async {
+                                            pullToRefreshController
+                                                ?.endRefreshing();
+                                            // Handle web page loading errors here
+                                            var isForMainFrame =
+                                                request.isForMainFrame ?? false;
+                                            if (!isForMainFrame ||
+                                                (!kIsWeb &&
+                                                    defaultTargetPlatform ==
+                                                        TargetPlatform.iOS &&
+                                                    error.type ==
+                                                        WebResourceErrorType
+                                                            .CANCELLED)) {
+                                              // controller.loadFile(assetFilePath: 'assets/404.html');
+                                              return;
+                                            }
+
+                                            // var errorUrl = request.url;
+                                            controller.loadFile(
+                                                assetFilePath:
+                                                    'assets/404.html');
+                                          },
+                                        ))
+                                    : loader())
                         : Container(
                             width: MediaQuery.of(context).size.width,
                             height: MediaQuery.of(context).size.height,
@@ -413,7 +472,8 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                 ),
                                 const Padding(padding: EdgeInsets.all(5.0)),
                                 MaterialButton(
-                                  minWidth: MediaQuery.of(context).size.width*(3/4),
+                                  minWidth: MediaQuery.of(context).size.width *
+                                      (3 / 4),
                                   height: 60,
                                   onPressed: () {
                                     webViewController?.reload();
@@ -430,7 +490,8 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                                 MaterialButton(
-                                  minWidth: MediaQuery.of(context).size.width/2,
+                                  minWidth:
+                                      MediaQuery.of(context).size.width / 2,
                                   height: 60,
                                   onPressed: () {
                                     OpenSettings.openDataRoamingSetting();
@@ -447,11 +508,10 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                 )
                               ],
                             )),
-                    // progress < 1.0 ?loadingwidget=="login"?loginSkeleton():loadingwidget=="home"?homeSkeleton():Container():Container(),
-
-                  ])))
+                    progress < 1.0 ? loader() : Container(),
+                  ]))),
         ])),
-      );
+      ));
     });
   }
 }

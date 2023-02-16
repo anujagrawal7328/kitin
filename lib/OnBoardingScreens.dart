@@ -15,7 +15,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   void _onIntroEnd(context) {
     Navigator.of(context)
-        .pushNamedAndRemoveUntil('/option-screen', (Route<dynamic> route) => false);
+        .pushNamedAndRemoveUntil('/webpage', (Route<dynamic> route) => false);
   }
 
   @override

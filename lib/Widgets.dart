@@ -1,10 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:skeleton_text/skeleton_text.dart';
+
 List<BoxShadow> shadowList = [
   BoxShadow(color: Colors.grey[300]!, blurRadius: 30, offset: const Offset(0, 10))
 ];
 Widget loginSkeleton(){
+
   return Container(
       height: 240,
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -50,36 +54,24 @@ Widget homeSkeleton(){
 }
 
 Widget loader() {
-  return Container(
-       color: Colors.white,
-      child:Center(
-      child: Container(
-    width: 100.0,
-    height: 100.0,
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(15),
-      color: Colors.grey[300]?.withOpacity(0.3),
-    ),
-    child: Center(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const <Widget>[
-          SizedBox(
-            height: 30.0,
-            width: 30.0,
-            child: CircularProgressIndicator(),
-          ),
-          Padding(padding: EdgeInsets.fromLTRB(0.0, 5.0, 0.0, 0.0)),
-          Text('Loading ...',
-              style: TextStyle(
-                  fontSize: 10.0,
-                  color: Colors.black,
-                  fontStyle: FontStyle.normal,
-                  decoration: TextDecoration.none))
-        ])),
-  )));
+  return  Container(
+      width: double.infinity,
+      height: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.withAlpha(50),
+      ),
+      child:Align(alignment:Alignment.center,
+      child: Image.asset(
+          "assets/Preloader.gif",
+          gaplessPlayback: true,
+          width: 50.0,
+          height:50.0
+      ),)
+      ,
+
+  );
+
 }
 
 MaterialColor buildMaterialColor(Color color) {

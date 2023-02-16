@@ -11,12 +11,13 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
-
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:kitin/WebPage.dart';
 import 'package:kitin/spalsh.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:upgrader/upgrader.dart';
@@ -24,15 +25,19 @@ import 'package:upgrader/upgrader.dart';
 
 import 'OnBoardingScreens.dart';
 
-import 'Network/NetworkBinding.dart';
+import 'Bindings/NetworkBinding.dart';
 import 'OptionScreen.dart';
 import 'Widgets.dart';
 import 'firebase_options.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 
 bool shouldUseFirestoreEmulator = false;
 bool _initialUriIsHandled = false;
+const _kShouldTestAsyncErrorOnInit = false;
 
+// Toggle this for testing Crashlytics in your app locally.
+const _kTestingCrashlytics = true;
 int counter =0;
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +45,18 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   await Upgrader.clearSavedSettings();
+  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  FlutterError.onError = (errorDetails) {
+    // If you wish to record a "non-fatal" exception, please use `FirebaseCrashlytics.instance.recordFlutterError` instead
+    analytics.logEvent(name: 'fatalError',parameters: {'message':errorDetails.toString()});
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    // If you wish to record a "non-fatal" exception, please remove the "fatal" parameter
+    analytics.logEvent(name: 'fatalError',parameters: {'message':error.toString()});
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
   FlutterNativeSplash.remove();
   final SharedPreferences prefs = await _prefs;
   if(prefs.getInt('counter')!=null){
@@ -78,6 +95,7 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription? _sub;
   String? sharedUrl;
   String? storeVersion;
+  bool permissionGranted=false;
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   PackageInfo _packageInfo = PackageInfo(
     appName: 'Unknown',
@@ -88,19 +106,43 @@ class _MyAppState extends State<MyApp> {
     installerStore: 'Unknown',
   );
 
+  late Future<void> _initializeFlutterFireFuture;
 
+  Future<void> _testAsyncErrorOnInit() async {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      final List<int> list = <int>[];
+      print(list[100]);
+    });
+  }
 
 
   @override
   void initState() {
-    secureScreen();
+    _initializeFlutterFireFuture = _initializeFlutterFire();
+     secureScreen();
     _initPackageInfo();
      getStoreVersion('kitin.kyro.edu.kitin');
+    _getStoragePermission();
     _handleIncomingLinks();
     _handleInitialUri();
+
     super.initState();
   }
+  Future<void> _initializeFlutterFire() async {
+    if (_kTestingCrashlytics) {
+      // Force enable crashlytics collection enabled if we're testing it.
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    } else {
+      // Else only enable it in non-debug builds.
+      // You could additionally extend this to allow users to opt-in.
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(!kDebugMode);
+    }
 
+    if (_kShouldTestAsyncErrorOnInit) {
+      await _testAsyncErrorOnInit();
+    }
+  }
   @override
   void dispose() {
     _sub?.cancel();
@@ -137,7 +179,19 @@ class _MyAppState extends State<MyApp> {
     await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
   }
 
+  Future _getStoragePermission() async {
+    var status = await Permission.storage.status;
+    if (status.isRestricted || status.isDenied || status.isPermanentlyDenied) {
+      // You can request multiple permissions at once.
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.storage
+      ].request();
+      if (kDebugMode) {
+        print(statuses[Permission.storage]);
+      } // it should print PermissionStatus.granted
+    }
 
+  }
 
   void _handleIncomingLinks() {
     if (!kIsWeb) {
@@ -203,19 +257,12 @@ class _MyAppState extends State<MyApp> {
           final SharedPreferences prefs = await _prefs;
           if (doc.data() != null) {
             final data = doc.data() as Map<String, dynamic>;
-            if (kDebugMode) {
-              print("Firebase Url: ${data['lsa']}");
-              print("Firebase Url: ${data['agriculture']}");
-              print("permanent link: ${prefs.getString('permanentLink')}");
-            }
-
             if(uri!=null){
               if(uri.toString()=="https://www.app.kitin.in"){
-                uri=Uri.parse(prefs.getString('permanentLink')!);
+                uri=Uri.parse('https://www.app.kitin.in/new-home');
               }
             }
-
-            setState((){sharedUrl =(uri ?? (prefs.getString('permanentLink')=="https://app.kitin.in/lsa-livestock-assistant"?data['lsa']??(prefs.getString('permanentLink')):data['agriculture']??(prefs.getString('permanentLink')))) as String?;
+            setState((){sharedUrl =uri==null ? data['url']!='' ?data['url']:'https://www.app.kitin.in/new-home':uri as String?;
             prefs.setString('url',sharedUrl!);
             if (kDebugMode) {
               print('sharedurl:$sharedUrl');
@@ -248,15 +295,14 @@ class _MyAppState extends State<MyApp> {
         initialBinding: NetworkBinding(),
         title: 'Kitin',
         debugShowCheckedModeBanner: false,
-
         theme: ThemeData(
           primarySwatch: buildMaterialColor(const Color(0xFF5f56c6)),
         ),
         routes: {
-          '/': (context) => _packageInfo.version==storeVersion?const Splash(): UpgradeAlert(child: const Splash()),
-          '/home': (context) => counter==1?const OnBoardingPage():const WebPage(),
+          '/': (context) => const Splash(),
+          '/home': (context) =>_packageInfo.version==storeVersion? (counter==1?const OnBoardingPage():const WebPage()):(counter==1?UpgradeAlert(child:const OnBoardingPage()):UpgradeAlert(child:const WebPage())),
           '/option-screen':(context) => const OptionScreen(),
-          '/webpage':(context) => const WebPage()
+          '/webpage':(context) => _packageInfo.version==storeVersion?const WebPage():UpgradeAlert(child:const WebPage()),
 
         });
   }
