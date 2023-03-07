@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:kitin/Widgets.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:open_settings/open_settings.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
@@ -152,7 +153,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
 
     // NOTE: Replace with your own app ID from https://www.onesignal.com
 
-    await OneSignal.shared.setAppId("3ef162a2-21be-4476-808d-feaaffe72e0c");
+    await OneSignal.shared.setAppId("32edc226-c7aa-45a5-ae52-80bfad5cad95");
     await OneSignal.shared.consentGranted(true);
     // iOS-only method to open launch URLs in Safari when set to false
     OneSignal.shared.setLaunchURLsInApp(false);
@@ -221,16 +222,10 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
 
   Future<void> loadTime() async{
     try {
-
-      //put whatever you are running here and add timeout to http request
-
       await http.get(Uri.parse("https://www.app.kitin.in/new-home")).timeout(const Duration(seconds: 10));
 
     } on TimeoutException catch (e, s) {
-
-      //show any error after timeout here
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Your Internet Connection Is Slow. Please Wait !')));
     }
   }
@@ -243,9 +238,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
     }
 
     return GetBuilder<NetworkManager>(builder: (value) {
-      // SystemChrome.setSystemUIOverlayStyle(
-      //   SystemUiOverlayStyle.dark.copyWith(statusBarColor:  const Color(0xFF262d95)),
-      // );
+
       return Scaffold(body:WillPopScope(
         onWillPop: () async {
           // detect Android back button click
@@ -290,7 +283,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                               allowsBackForwardNavigationGestures:
                                                   true,
                                               useShouldOverrideUrlLoading: true,
-                                              cacheEnabled: true,
+                                              cacheEnabled:true,
                                               allowFileAccess: true,
                                               mediaPlaybackRequiresUserGesture:
                                                   false,
@@ -354,7 +347,9 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                                 uri.toString().startsWith(
                                             "https://kitin.in/") ||
                                                 uri.toString().startsWith(
-                                                    "https://kitin.in/")) {
+                                                    "https://kitin.in/") ||
+                                                uri.toString().startsWith(
+                                                    "https://secure.ccavenue.com/") ||  uri.toString().startsWith(sharedUrl.toString()) ) {
                                               // do whatever you want and cancel the request.
 
                                               print(
@@ -402,15 +397,18 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                             var isForMainFrame =
                                                 request.isForMainFrame ?? false;
                                             if (!isForMainFrame) {
-                                              controller.loadFile(
-                                                  assetFilePath:
-                                                      'assets/404.html');
                                               return;
                                             }
-
+                                            await FirebaseAnalytics.instance.logEvent(
+                                              name: 'Http_Error',
+                                              parameters: <String, dynamic>{
+                                                'string': errorResponse.reasonPhrase.toString(),
+                                                'status code':errorResponse.statusCode
+                                              },
+                                            );
                                             controller.loadFile(
                                                 assetFilePath:
-                                                    'assets/404.html');
+                                                'assets/404.html');
                                           },
                                           onReceivedError: (controller, request,
                                               error) async {
@@ -426,14 +424,18 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                                     error.type ==
                                                         WebResourceErrorType
                                                             .CANCELLED)) {
-                                              // controller.loadFile(assetFilePath: 'assets/404.html');
                                               return;
                                             }
-
-                                            // var errorUrl = request.url;
-                                            controller.loadFile(
-                                                assetFilePath:
-                                                    'assets/404.html');
+                                            await FirebaseAnalytics.instance.logEvent(
+                                              name: 'custom_error',
+                                              parameters: <String, dynamic>{
+                                                'string': error.toString(),
+                                                'type':error.type.toString()
+                                              },
+                                            );
+                                            // controller.loadFile(
+                                            //     assetFilePath:
+                                            //     'assets/404.html');
                                           },
                                         ))
                                     : loader())
@@ -494,7 +496,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                       MediaQuery.of(context).size.width / 2,
                                   height: 60,
                                   onPressed: () {
-                                    OpenSettings.openDataRoamingSetting();
+                                    AppSettings.openDataRoamingSettings();
                                   },
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)),

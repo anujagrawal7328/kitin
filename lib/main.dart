@@ -45,15 +45,13 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   await Upgrader.clearSavedSettings();
-  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
   FlutterError.onError = (errorDetails) {
-    // If you wish to record a "non-fatal" exception, please use `FirebaseCrashlytics.instance.recordFlutterError` instead
-    analytics.logEvent(name: 'fatalError',parameters: {'message':errorDetails.toString()});
+    // If you wish to record a "non-fatal" exception, please use `FirebaseCrashlytics.instance.recordFlutterError` instead;
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
   };
   PlatformDispatcher.instance.onError = (error, stack) {
     // If you wish to record a "non-fatal" exception, please remove the "fatal" parameter
-    analytics.logEvent(name: 'fatalError',parameters: {'message':error.toString()});
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
@@ -252,7 +250,7 @@ class _MyAppState extends State<MyApp> {
         if (!mounted) return;
         final docRef = FirebaseFirestore.instance
             .collection("temp")
-            .doc("8IrsyMVUtmfFOwzufhpX");
+            .doc("anL6VRfOpH29pnyZTjrN");
         docRef.get().then((DocumentSnapshot doc) async {
           final SharedPreferences prefs = await _prefs;
           if (doc.data() != null) {
@@ -287,14 +285,19 @@ class _MyAppState extends State<MyApp> {
   }
 
 
-
+  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle.dark.copyWith(statusBarColor:  const Color(0xFFFFFFFF)));
     return GetMaterialApp(
         initialBinding: NetworkBinding(),
-        title: 'Kitin',
+        title: 'KIT-IN',
         debugShowCheckedModeBanner: false,
+        navigatorObservers: [
+          FirebaseAnalyticsObserver(analytics: analytics),
+        ],
         theme: ThemeData(
           primarySwatch: buildMaterialColor(const Color(0xFF5f56c6)),
         ),

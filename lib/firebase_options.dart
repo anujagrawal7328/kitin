@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -25,7 +28,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -43,41 +49,21 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA1cOd9m2CRTbWiZXWXuwOyVPTbR6UFKI0',
-    appId: '1:1068018762929:web:50e88bd397ac24528a4e90',
-    messagingSenderId: '1068018762929',
-    projectId: 'kitin-fbed4',
-    authDomain: 'kitin-fbed4.firebaseapp.com',
-    storageBucket: 'kitin-fbed4.appspot.com',
-    measurementId: 'G-ZHFDSPEKZK',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDUFJMtCAZ-coxaig44nIrJqip8MIdpHjU',
-    appId: '1:1068018762929:android:63d9153ceab80f8a8a4e90',
-    messagingSenderId: '1068018762929',
-    projectId: 'kitin-fbed4',
-    storageBucket: 'kitin-fbed4.appspot.com',
+    apiKey: 'AIzaSyCufAvvNNQrr9vbNtM9LZlgT3npbKlE8mE',
+    appId: '1:827418780184:android:ebb29d7d3d344b9712196d',
+    messagingSenderId: '827418780184',
+    projectId: 'kit-in',
+    storageBucket: 'kit-in.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBQMEGGlD6gy4SJpsx4KxinxvoUibao2fc',
-    appId: '1:1068018762929:ios:9e92af2278bd54298a4e90',
-    messagingSenderId: '1068018762929',
-    projectId: 'kitin-fbed4',
-    storageBucket: 'kitin-fbed4.appspot.com',
-    iosClientId: '1068018762929-nrrjr47qldn3a2nddb9c8o17u5lfrs57.apps.googleusercontent.com',
-    iosBundleId: 'kitin.kyro.edu.kitin',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBQMEGGlD6gy4SJpsx4KxinxvoUibao2fc',
-    appId: '1:1068018762929:ios:9e92af2278bd54298a4e90',
-    messagingSenderId: '1068018762929',
-    projectId: 'kitin-fbed4',
-    storageBucket: 'kitin-fbed4.appspot.com',
-    iosClientId: '1068018762929-nrrjr47qldn3a2nddb9c8o17u5lfrs57.apps.googleusercontent.com',
+    apiKey: 'AIzaSyALWAB8DzW8cmYLZXDk23f0k5awJSXoFBw',
+    appId: '1:827418780184:ios:09d1f55631e9959412196d',
+    messagingSenderId: '827418780184',
+    projectId: 'kit-in',
+    storageBucket: 'kit-in.appspot.com',
+    iosClientId: '827418780184-v9ucdhv7f1dupccdt0hggbmuj9s288iq.apps.googleusercontent.com',
     iosBundleId: 'kitin.kyro.edu.kitin',
   );
 }
