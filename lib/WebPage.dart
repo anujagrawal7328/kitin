@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -25,7 +26,7 @@ class WebPage extends StatefulWidget {
 class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
   final GlobalKey webViewKey = GlobalKey();
 
-  String? sharedUrl, loadingwidget;
+  String? sharedUrl,addonUrl, loadingwidget;
   InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
   PullToRefreshSettings pullToRefreshSettings =
@@ -212,8 +213,10 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
   Future<WebUri> get _url async {
     final SharedPreferences prefs = await _prefs;
     sharedUrl = prefs.getString('url');
+    addonUrl = prefs.getString('url2');
     if (kDebugMode) {
       print('sharedurl:$sharedUrl');
+      print('addonUrl:$addonUrl');
     }
 
     return WebUri.uri(Uri.parse(sharedUrl!));
@@ -349,7 +352,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                                 uri.toString().startsWith(
                                                     "https://kitin.in/") ||
                                                 uri.toString().startsWith(
-                                                    "https://secure.ccavenue.com/") ||  uri.toString().startsWith(sharedUrl.toString()) ) {
+                                                    "https://secure.ccavenue.com/") ||  uri.toString().startsWith(sharedUrl.toString()) ||  uri.toString().startsWith(addonUrl.toString())) {
                                               // do whatever you want and cancel the request.
 
                                               print(
@@ -370,13 +373,21 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
 
                                           onProgressChanged:
                                               (controller, progress) {
+                                                final docRef = FirebaseFirestore.instance
+                                                    .collection("temp")
+                                                    .doc("anL6VRfOpH29pnyZTjrN");
+                                                docRef.get().then((DocumentSnapshot doc) async {
+                                                  if (doc.data() != null) {
+                                                    final data = doc.data() as Map<String, dynamic>;
+                                                    setState(() {
+                                                      this.progress = progress / data['loader_speed'];
+                                                    });
+                                                  }
 
-                                            setState(() {
-                                              this.progress = progress / 75;
-                                            });
+                                                }, onError: (e) => print("Error getting document: $e"));
+
                                             if (progress == 100) {
-                                              pullToRefreshController
-                                                  ?.endRefreshing();
+                                              pullToRefreshController?.endRefreshing();
                                             }
 
 
@@ -408,7 +419,7 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                             );
                                             controller.loadFile(
                                                 assetFilePath:
-                                                'assets/404.html');
+                                                'assets/404.html?error_code=${errorResponse.reasonPhrase}');
                                           },
                                           onReceivedError: (controller, request,
                                               error) async {
@@ -433,9 +444,10 @@ class _WebPageState extends State<WebPage> with SingleTickerProviderStateMixin {
                                                 'type':error.type.toString()
                                               },
                                             );
-                                            // controller.loadFile(
-                                            //     assetFilePath:
-                                            //     'assets/404.html');
+
+                                            controller.loadFile(
+                                                assetFilePath:
+                                                'assets/404.html?error_code=${error.description.toString()}');
                                           },
                                         ))
                                     : loader())

@@ -23,5 +23,13 @@
 <div class="interstitial-wrapper">
     <img src="404.svg">
     <p><center>Sorry, the service isn't available right now.</center><br><center> Please try again later</center></p>
+    <P><center id="error"></center>></P>
 </div>
+<script type="text/javascript">
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    var e = urlParams.get('error_code');
+    document.getElementById("error").innerHTML += `${e}`;
+
+</script>
 </body>

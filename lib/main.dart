@@ -260,8 +260,9 @@ class _MyAppState extends State<MyApp> {
                 uri=Uri.parse('https://www.app.kitin.in/new-home');
               }
             }
-            setState((){sharedUrl =uri==null ? data['url']!='' ?data['url']:'https://www.app.kitin.in/new-home':uri as String?;
+            setState((){sharedUrl =uri==null ? data['url']!='' ?data['url']+'new-home':'https://www.app.kitin.in/new-home':uri as String?;
             prefs.setString('url',sharedUrl!);
+            prefs.setString('url2',data['url']);
             if (kDebugMode) {
               print('sharedurl:$sharedUrl');
             }
