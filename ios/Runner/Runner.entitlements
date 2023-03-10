@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>www.app.kitin.in</string>
+		<string>app.kitin.in</string>
+		<string>kitin.in</string>
+		<string>kitinapp.page.link</string>
+		<string>populartv.in</string>
+	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.kitin.kyro.edu.kitin.onesignal</string>
+	</array>
+</dict>
 </plist>
